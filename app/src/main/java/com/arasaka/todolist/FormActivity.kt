@@ -6,16 +6,16 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import android.widget.DatePicker
 import android.widget.EditText
-import android.widget.TimePicker
 import com.arasaka.todolist.MainActivity.Companion.NEW_TASK
 import com.arasaka.todolist.MainActivity.Companion.NEW_TASK_KEY
+import java.lang.String.format
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 class FormActivity : AppCompatActivity() {
 
@@ -41,19 +41,22 @@ class FormActivity : AppCompatActivity() {
         edtDate = findViewById(R.id.edtDate);
         btnAddTask = findViewById(R.id.btnAddTask);
 
+
         edtDate.setOnClickListener {
             val nowDate = LocalDate.now()
-            DatePickerDialog(
+            val datePicker = DatePickerDialog(
                 this,
-                { _, year, month, dayOfMonth -> edtDate.setText("$dayOfMonth-$month-$year") },
+                { _, year, month, dayOfMonth -> edtDate.setText("$dayOfMonth/$month/$year").toString() },
                 nowDate.year,
-                nowDate.monthValue - 1 ,
+                nowDate.monthValue-1 ,
                 nowDate.dayOfMonth
             ).show()
         }
 
+
         edtTime.setOnClickListener {
             val nowTime = LocalTime.now()
+
             TimePickerDialog(this,
                 { _, hour, minute ->
                     edtTime.setText("$hour:$minute")
@@ -70,8 +73,8 @@ class FormActivity : AppCompatActivity() {
                         edtTitle.text.toString(),
                         edtDescription.text.toString(),
                         LocalDateTime.of(
-                            LocalDate.parse(edtDate.text,DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                            ), LocalTime.parse(edtTime.text, DateTimeFormatter.ofPattern("hh:mm"))
+                            LocalDate.parse(edtDate.text, DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                            LocalTime.parse(edtTime.text, DateTimeFormatter.ofPattern("hh:mm"))
                         )
                     )
                 )

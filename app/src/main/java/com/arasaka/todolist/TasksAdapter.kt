@@ -28,6 +28,7 @@ class TasksAdapter(val list: MutableList<Task>) :
     override fun onBindViewHolder(holder: TasksAdapter.TaskViewHolder, position: Int) {
         //(holder as TaskViewHolder).bind(list[position])
         holder.bind(list[position], position)
+
     }
 
     override fun getItemCount() = list.size
@@ -43,10 +44,12 @@ class TasksAdapter(val list: MutableList<Task>) :
             txvDateTime.text = data.dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy hh:mm a"));
 
             chkCompleted.setOnClickListener {
-                list.removeAt(position - 1)//BUG SOLVED: Delete correct task position
+                list.removeAt(position)
                 notifyItemRemoved(position);
+                notifyItemRangeChanged(position, list.size);//BUG SOLVED: Delete correct task position
 
             }
+
 
             rootView.setOnClickListener { }
         }
