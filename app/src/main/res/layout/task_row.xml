@@ -28,13 +28,15 @@
             android:drawablePadding="5dp"
             android:ellipsize="end"
             app:drawableStartCompat="@drawable/ic_task"
-            app:layout_constraintEnd_toStartOf="@id/chkCompleted"/>
+            app:layout_constraintEnd_toStartOf="@id/chkCompleted"
+            android:textSize="20dp"
+            android:textStyle="bold"/>
 
         <TextView
             android:id="@+id/txvDateTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:lines="1"
             android:maxLines="1"
             android:ellipsize="end"

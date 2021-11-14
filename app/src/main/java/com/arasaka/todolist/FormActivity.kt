@@ -75,23 +75,32 @@ class FormActivity : AppCompatActivity() {
 
 
         btnAddTask.setOnClickListener {
-            setResult(
-                NEW_TASK, Intent().putExtra(
-                    NEW_TASK_KEY,
-                    Task(
-                        0,
-                        edtTitle.text.toString(),
-                        edtDescription.text.toString(),
-                        LocalDateTime.of(
-                            LocalDate.parse(edtDate.text, DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                            LocalTime.parse(edtTime.text, DateTimeFormatter.ofPattern("HH:mm"))
+
+            if (edtTitle.text.toString().length < 1 && edtDescription.text.toString().length < 1 && edtDate.text.toString().length < 1) {
+                Toast.makeText(this, "Invalid field values", Toast.LENGTH_LONG).show()
+                finish()
+            } else {
+                setResult(
+                    NEW_TASK, Intent().putExtra(
+                        NEW_TASK_KEY,
+                        Task(
+                            0,
+                            edtTitle.text.toString(),
+                            edtDescription.text.toString(),
+                            LocalDateTime.of(
+                                LocalDate.parse(
+                                    edtDate.text,
+                                    DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                                ),
+                                LocalTime.parse(edtTime.text, DateTimeFormatter.ofPattern("HH:mm"))
+                            )
                         )
                     )
                 )
-            )
-            finish()
+                finish()
+            }
         }
 
-
     }
+
 }
