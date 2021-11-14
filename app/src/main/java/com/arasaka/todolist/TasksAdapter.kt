@@ -41,7 +41,7 @@ class TasksAdapter(val list: MutableList<Task>) :
             val chkCompleted: MaterialCheckBox = findViewById(R.id.chkCompleted)
 
             txvTitle.text = data.title;
-            txvDateTime.text = data.dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy hh:mm a"));
+            txvDateTime.text = data.dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a"));
 
             chkCompleted.setOnClickListener {
                 list.removeAt(position)
