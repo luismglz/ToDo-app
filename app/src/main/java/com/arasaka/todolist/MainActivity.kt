@@ -3,11 +3,16 @@ package com.arasaka.todolist
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
+import com.arasaka.todolist.Adapter.TasksAdapter
+import com.arasaka.todolist.Model.Task
+import com.arasaka.todolist.Model.TaskDatabase
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.Month
 import java.util.ArrayList
@@ -22,15 +27,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var rcvTask : RecyclerView
     private lateinit var btnAddTask : FloatingActionButton
-    private lateinit var adapter :  TasksAdapter
+    private lateinit var adapter : TasksAdapter
     private val SAVED_TASKS_KEY = "tasks"
 
-    private var tasks = mutableListOf(
-        Task(0, "Test", "Description", LocalDateTime.now()),
-        Task(1, "Test1", "Description1", LocalDateTime.of(2021, Month.AUGUST, 6, 12, 40)),
-        Task(2, "Test2", "Description2", LocalDateTime.of(2022, Month.AUGUST, 6, 12, 40)),
-        Task(3, "Test3", "Description3", LocalDateTime.of(2023, Month.AUGUST, 6, 12, 40))
-    )
+    private var tasks = mutableListOf<Task>()
+
+    private lateinit var db : TaskDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,8 +44,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         initViews();
-        setAdapter();
+
     }
+
+    override fun onResume() {
+        super.onResume()
+        db = Room.databaseBuilder(this, TaskDatabase::class.java, "Tasks").build()
+
+        MainScope().launch {
+            tasks = db.taskDao().getPendingTasks().toMutableList()
+            setAdapter();
+        }
+    }
+
 
     private fun initViews(){
         rcvTask = findViewById(R.id.rcvTasks)
@@ -59,7 +72,17 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun setAdapter() {
-        adapter = TasksAdapter(tasks)
+        adapter = TasksAdapter(tasks,
+            onClickDoneTask = { task, position ->
+                MainScope().launch {
+                    db.taskDao().updateTask(task.apply {
+                        status = false
+                    })
+                    adapter.remove(position)
+                }
+        }, onClickDetailTask = {
+
+            } )
 
         rcvTask.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         rcvTask.adapter = adapter;
@@ -80,7 +103,13 @@ class MainActivity : AppCompatActivity() {
         if(requestCode == NEW_TASK){
 
             data?.getParcelableExtra<Task>(NEW_TASK_KEY)?.let {
-                adapter.add(it)
+                MainScope().launch(Dispatchers.Main){
+                    adapter.add(it);
+                }
+
+                MainScope().launch(Dispatchers.IO) {
+                db.taskDao().saveNewTask(it);
+                }
             }
 
         }

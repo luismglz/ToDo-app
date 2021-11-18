@@ -10,11 +10,10 @@ import android.widget.EditText
 import android.widget.Toast
 import com.arasaka.todolist.MainActivity.Companion.NEW_TASK
 import com.arasaka.todolist.MainActivity.Companion.NEW_TASK_KEY
-import java.lang.String.format
+import com.arasaka.todolist.Model.Task
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.Month
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -53,12 +52,17 @@ class FormActivity : AppCompatActivity() {
             val nowDate = LocalDate.now()
             val picker = DatePickerDialog(
                 this,
-                { _, year, month, dayOfMonth -> edtDate.setText("${checkDigit(dayOfMonth)}/${checkDigit(month)}/$year")},
+                { _, year, month, dayOfMonth ->
+                    val realMonth = month + 1;
+                    //edtDate.setText("${if (dayOfMonth < 10) "0$dayOfMonth" else dayOfMonth}/${if (realMonth < 10) "0$realMonth" else realMonth}/$year")
+                    edtDate.setText("${checkDigit(dayOfMonth)}/${checkDigit(month)}/$year")
+                },
                 nowDate.year,
                 nowDate.monthValue-1 ,
                 nowDate.dayOfMonth
             )
-            picker.datePicker.minDate = System.currentTimeMillis()-1000
+            //picker.datePicker.minDate = System.currentTimeMillis()-1000
+            picker.datePicker.minDate = Calendar.getInstance().timeInMillis
             picker.show()
         }
 
@@ -78,7 +82,7 @@ class FormActivity : AppCompatActivity() {
 
         btnAddTask.setOnClickListener {
 
-            if (edtTitle.text.toString().length < 1 && edtDescription.text.toString().length < 1 && edtDate.text.toString().length < 1) {
+            if (edtTitle.text.isEmpty() || edtDescription.text.isEmpty() || edtDate.text.isEmpty() || edtTime.text.isEmpty() ) {
                 Toast.makeText(this, "Invalid field values", Toast.LENGTH_LONG).show()
                 finish()
             } else {
@@ -102,6 +106,8 @@ class FormActivity : AppCompatActivity() {
                 finish()
             }
         }
+
+
 
     }
 
