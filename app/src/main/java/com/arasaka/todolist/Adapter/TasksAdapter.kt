@@ -23,6 +23,12 @@ class TasksAdapter(
         notifyItemInserted(list.size -1)
     }
 
+    fun update(task:Task){
+        val index = list.indexOfFirst { it.id == task.id }
+        list[index] = task
+        notifyItemChanged(index)
+    }
+
 
     fun remove(position: Int){
         list.removeAt(position)
@@ -56,7 +62,8 @@ class TasksAdapter(
             val chkCompleted: MaterialCheckBox = findViewById(R.id.chkCompleted)
 
             txvTitle.text = data.title;
-            txvDateTime.text = data.dateTime?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a"));
+            txvDateTime.text =
+                data.dateTime?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a"));
             chkCompleted.isChecked = false;
 
             chkCompleted.setOnClickListener {
@@ -64,7 +71,9 @@ class TasksAdapter(
             }
 
 
-            rootView.setOnClickListener { }
+            rootView.setOnClickListener {
+                onClickDetailTask(data)
+            }
         }
     }
 

@@ -5,4 +5,5 @@
     <string name="task_date">Task date</string>
     <string name="task_time">Task time</string>
     <string name="save_task">Save task</string>
+    <string name="update_task">Update task</string>
 </resources>

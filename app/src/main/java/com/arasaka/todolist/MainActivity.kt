@@ -22,6 +22,8 @@ class MainActivity : AppCompatActivity() {
     //companion = static, Therefore it could be used in other classes without creating an instance
     companion object{
         val NEW_TASK = 200
+        val UPDATE_TASK = 201
+
         val NEW_TASK_KEY = "newTask"
     }
 
@@ -39,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         savedInstanceState?.let {
-            val savedTasks = it.getParcelableArrayList<Task>(SAVED_TASKS_KEY)?.toMutableList()?:tasks
+            val savedTasks = it.getParcelableArrayList<Task>(SAVED_TASKS_KEY)?.toMutableList() ?: tasks
             tasks = savedTasks
         }
 
@@ -58,12 +60,12 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun initViews(){
+    private fun initViews() {
         rcvTask = findViewById(R.id.rcvTasks)
         btnAddTask = findViewById(R.id.btnAddTask)
 
-        btnAddTask.setOnClickListener{
-          //  adapter.add(Task(1, "New task", "Description1", LocalDateTime.of(2021, Month.AUGUST, 6, 10, 40)))
+        btnAddTask.setOnClickListener {
+            //  adapter.add(Task(1, "New task", "Description1", LocalDateTime.of(2021, Month.AUGUST, 6, 10, 40)))
 
             startActivityForResult(Intent(this, FormActivity::class.java), NEW_TASK)
         }
@@ -80,9 +82,13 @@ class MainActivity : AppCompatActivity() {
                     })
                     adapter.remove(position)
                 }
-        }, onClickDetailTask = {
-
-            } )
+            },
+            onClickDetailTask = { task ->
+                startActivityForResult(Intent(this, FormActivity::class.java).apply {
+                    putExtra("isTaskDetail", true)
+                    putExtra("task", task)
+                }, UPDATE_TASK)
+            })
 
         rcvTask.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         rcvTask.adapter = adapter;
@@ -100,18 +106,28 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         //check the "response" code
-        if(requestCode == NEW_TASK){
+        if (requestCode == NEW_TASK) {
 
             data?.getParcelableExtra<Task>(NEW_TASK_KEY)?.let {
-                MainScope().launch(Dispatchers.Main){
+                MainScope().launch(Dispatchers.Main) {
                     adapter.add(it);
                 }
 
                 MainScope().launch(Dispatchers.IO) {
-                db.taskDao().saveNewTask(it);
+                    db.taskDao().saveNewTask(it);
                 }
             }
 
+        } else if (requestCode == UPDATE_TASK) {
+            data?.getParcelableExtra<Task>(NEW_TASK_KEY)?.let {
+                MainScope().launch(Dispatchers.Main) {
+                    adapter.update(it)
+                }
+
+                MainScope().launch(Dispatchers.IO) {
+                    db.taskDao().updateTask(it)
+                }
+            }
         }
     }
 
