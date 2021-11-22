@@ -100,7 +100,7 @@ class FormActivity : AppCompatActivity() {
 
             if (edtTitle.text.isEmpty() || edtDescription.text.isEmpty() || edtDate.text.isEmpty() || edtTime.text.isEmpty()) {
                 Toast.makeText(this, "Invalid field values", Toast.LENGTH_LONG).show()
-                finish()
+                //finish()
             } else {
                 setResult(
                     if (isDetailTask) UPDATE_TASK else NEW_TASK, Intent().putExtra(

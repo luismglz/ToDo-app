@@ -137,6 +137,7 @@ class MainActivity : AppCompatActivity() {
                         putInt("notificationID",it.id)
                         putString("notificationTitle", it.title)
                         putString("notificationDescription", it.description)
+                        putString("notificationDateTime",it.dateTime.toString())
                     }.build())
                 }
             }
