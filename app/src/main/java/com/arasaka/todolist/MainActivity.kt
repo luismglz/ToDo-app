@@ -22,6 +22,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.lang.reflect.Array.getInt
 import java.time.LocalDateTime
 import java.time.Month
 import java.time.OffsetDateTime
@@ -29,7 +30,6 @@ import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
-
     //companion = static, Therefore it could be used in other classes without creating an instance
     companion object{
         val NEW_TASK = 200
@@ -45,7 +45,8 @@ class MainActivity : AppCompatActivity() {
 
     private var tasks = mutableListOf<Task>()
 
-    private lateinit var db : TaskDatabase
+    private lateinit var db : TaskDatabase;
+    private var isDetailTask = false;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +59,17 @@ class MainActivity : AppCompatActivity() {
 
         createNotificationChannel()
         initViews();
+
+        isDetailTask = intent.getBooleanExtra("isTaskDetail",false)
+        val taskNotification = intent.getParcelableExtra("task")?: Task()
+
+        if (isDetailTask){
+            val resultIntent = Intent(this, FormActivity::class.java).apply {
+                putExtra("isTaskDetail",true)
+                putExtra("task",taskNotification)
+            }
+            startActivity(resultIntent)
+        }
 
     }
 
@@ -94,6 +106,7 @@ class MainActivity : AppCompatActivity() {
                     })
                     adapter.remove(position)
                 }
+                cancelWorker(task.id)
             },
             onClickDetailTask = { task ->
                 startActivityForResult(Intent(this, FormActivity::class.java).apply {
@@ -104,6 +117,11 @@ class MainActivity : AppCompatActivity() {
 
         rcvTask.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         rcvTask.adapter = adapter;
+    }
+
+    private fun cancelWorker( id:Int){
+        //Cancels all unfinished work in the work chain with the given name <<"NOTIFICATION_WORK $id">>.
+        WorkManager.getInstance(this).cancelUniqueWork("NOTIFICATION_WORK $id")
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -127,17 +145,16 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 MainScope().launch(Dispatchers.IO) {
-                    db.taskDao().saveNewTask(it);
-
+                    val id = db.taskDao().saveNewTask(it);
                     val zone = OffsetDateTime.now().offset
                     val selectedMillis = it.dateTime?.toInstant(zone)?.toEpochMilli() ?: 0
                     val nowMillis = LocalDateTime.now().toInstant(zone).toEpochMilli()
 
-                    scheduleNotification(selectedMillis - nowMillis, Data.Builder().apply{
-                        putInt("notificationID",it.id)
+                    scheduleNotification(selectedMillis - nowMillis, Data.Builder().apply {
+                        putInt("notificationID", id.toInt())
                         putString("notificationTitle", it.title)
                         putString("notificationDescription", it.description)
-                        putString("notificationDateTime",it.dateTime.toString())
+                        putString("notificationDateTime", it.dateTime.toString())
                     }.build())
                 }
             }
@@ -158,32 +175,30 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-
-
-    private fun scheduleNotification(delay: Long, data:Data){
+    private fun scheduleNotification(delay: Long, data: Data) {
 
         val notificationWork = OneTimeWorkRequest.Builder(NotificationManagerImpl::class.java)
             .setInitialDelay(delay, TimeUnit.MILLISECONDS).setInputData(data).build()
 
         val instanceWorkManager = WorkManager.getInstance(this)
         instanceWorkManager.beginUniqueWork(
-            "NOTIFICATION_WORK ${data.getInt("notificationID",taskId)}",
+            "NOTIFICATION_WORK ${data.getInt("notificationID", 0)}",
             ExistingWorkPolicy.APPEND_OR_REPLACE, notificationWork
         ).enqueue()
     }
 
 
-    private fun createNotificationChannel(){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "TASKS"
             val descriptionText = "Channel of pending tasks"
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel("TASK_CHANNEL",name, importance).apply {
+            val channel = NotificationChannel("TASK_CHANNEL", name, importance).apply {
                 description = descriptionText
             }
 
-            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel);
         }
     }

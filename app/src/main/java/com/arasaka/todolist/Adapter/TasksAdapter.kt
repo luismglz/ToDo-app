@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.arasaka.todolist.Model.Task
+import com.arasaka.todolist.Model.TaskDatabase
 import com.arasaka.todolist.R
 import com.google.android.material.checkbox.MaterialCheckBox
 import java.time.format.DateTimeFormatter
@@ -16,7 +17,7 @@ class TasksAdapter(
     var onClickDetailTask:(task: Task) -> Unit
 ):
     RecyclerView.Adapter<TasksAdapter.TaskViewHolder>() {
-
+    private lateinit var db : TaskDatabase
 
     fun add(task: Task) {
         list.add(task)
@@ -67,7 +68,9 @@ class TasksAdapter(
             chkCompleted.isChecked = false;
 
             chkCompleted.setOnClickListener {
+                //db.taskDao().deleteTask(task = data.id)
                 onClickDoneTask(data, adapterPosition)
+
             }
 
 
