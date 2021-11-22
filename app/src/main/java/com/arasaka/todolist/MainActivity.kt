@@ -1,11 +1,20 @@
 package com.arasaka.todolist
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.ContactsContract
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.arasaka.todolist.Adapter.TasksAdapter
 import com.arasaka.todolist.Model.Task
 import com.arasaka.todolist.Model.TaskDatabase
@@ -15,7 +24,9 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.Month
+import java.time.OffsetDateTime
 import java.util.ArrayList
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rcvTask : RecyclerView
     private lateinit var btnAddTask : FloatingActionButton
     private lateinit var adapter : TasksAdapter
-    private val SAVED_TASKS_KEY = "tasks"
+    private val SAVED_TASKS_KEY = "task"
 
     private var tasks = mutableListOf<Task>()
 
@@ -45,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             tasks = savedTasks
         }
 
+        createNotificationChannel()
         initViews();
 
     }
@@ -111,10 +123,21 @@ class MainActivity : AppCompatActivity() {
             data?.getParcelableExtra<Task>(NEW_TASK_KEY)?.let {
                 MainScope().launch(Dispatchers.Main) {
                     adapter.add(it);
+
                 }
 
                 MainScope().launch(Dispatchers.IO) {
                     db.taskDao().saveNewTask(it);
+
+                    val zone = OffsetDateTime.now().offset
+                    val selectedMillis = it.dateTime?.toInstant(zone)?.toEpochMilli() ?: 0
+                    val nowMillis = LocalDateTime.now().toInstant(zone).toEpochMilli()
+
+                    scheduleNotification(selectedMillis - nowMillis, Data.Builder().apply{
+                        putInt("notificationID",it.id)
+                        putString("notificationTitle", it.title)
+                        putString("notificationDescription", it.description)
+                    }.build())
                 }
             }
 
@@ -129,8 +152,40 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+
     }
 
+
+
+
+
+    private fun scheduleNotification(delay: Long, data:Data){
+
+        val notificationWork = OneTimeWorkRequest.Builder(NotificationManagerImpl::class.java)
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS).setInputData(data).build()
+
+        val instanceWorkManager = WorkManager.getInstance(this)
+        instanceWorkManager.beginUniqueWork(
+            "NOTIFICATION_WORK ${data.getInt("notificationID",taskId)}",
+            ExistingWorkPolicy.APPEND_OR_REPLACE, notificationWork
+        ).enqueue()
+    }
+
+
+    private fun createNotificationChannel(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val name = "TASKS"
+            val descriptionText = "Channel of pending tasks"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel("TASK_CHANNEL",name, importance).apply {
+                description = descriptionText
+            }
+
+            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
 
 
 }

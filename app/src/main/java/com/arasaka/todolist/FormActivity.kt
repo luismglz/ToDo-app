@@ -65,12 +65,13 @@ class FormActivity : AppCompatActivity() {
 
         edtDate.setOnClickListener {
             val nowDate = LocalDate.now()
+
             val picker = DatePickerDialog(
                 this,
                 { _, year, month, dayOfMonth ->
                     val realMonth = month + 1;
                     //edtDate.setText("${if (dayOfMonth < 10) "0$dayOfMonth" else dayOfMonth}/${if (realMonth < 10) "0$realMonth" else realMonth}/$year")
-                    edtDate.setText("${checkDigit(dayOfMonth)}/${checkDigit(month)}/$year")
+                    edtDate.setText("${checkDigit(dayOfMonth)}/${checkDigit(realMonth)}/$year")
                 },
                 nowDate.year,
                 nowDate.monthValue - 1,
@@ -90,7 +91,7 @@ class FormActivity : AppCompatActivity() {
                     edtTime.setText("${checkDigit(hour)}:${checkDigit(minute)}")
                 }, nowTime.hour,
                 nowTime.minute,
-                false
+                true
             ).show()
         }
 
